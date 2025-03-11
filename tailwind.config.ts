@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,17 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Add our chat specific colors
+				chat: {
+					'user-bg': '#f7f7f8',
+					'bot-bg': 'white',
+					'hover': '#e5deff',
+				},
+				analogyai: {
+					primary: '#9b87f5',
+					secondary: '#7E69AB',
+					light: '#E5DEFF',
 				}
 			},
 			borderRadius: {
@@ -69,26 +81,36 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
+				"accordion-down": {
+					from: { height: "0" },
+					to: { height: "var(--radix-accordion-content-height)" },
+				},
+				"accordion-up": {
+					from: { height: "var(--radix-accordion-content-height)" },
+					to: { height: "0" },
+				},
+				typing: {
+					"0%": {
+						width: "0%",
+						visibility: "hidden"
 					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
+					"100%": {
+						width: "100%"
 					}
 				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
+				blink: {
+					"50%": {
+						borderColor: "transparent"
 					},
-					to: {
-						height: '0'
+					"100%": {
+						borderColor: "white"
 					}
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				"accordion-down": "accordion-down 0.2s ease-out",
+				"accordion-up": "accordion-up 0.2s ease-out",
+				typing: "typing 2s steps(20) infinite alternate, blink .7s infinite"
 			}
 		}
 	},
