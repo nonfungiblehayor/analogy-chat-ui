@@ -1,17 +1,26 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatSidebar from './ChatSidebar';
 import ChatMessage, { MessageType } from './ChatMessage';
 import ChatInput from './ChatInput';
 import WelcomeScreen from './WelcomeScreen';
 import { Loader2 } from 'lucide-react';
+import { User } from '@/context/Usercontext';
+import toast from 'react-hot-toast';
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const user = useContext(User)
+  const testWithExample = () => {
+    if(user) {
 
+    } else {
+      toast.error("Sign in to start  a conversation")
+    }
+  }
   // Scroll to the bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -68,10 +77,6 @@ const ChatInterface = () => {
     simulateResponse(content);
   };
 
-  const handleExampleClick = (example: string) => {
-    handleSendMessage(example);
-  };
-
   return (
     <div className="flex h-screen flex-col">
       <ChatHeader />
@@ -89,7 +94,7 @@ const ChatInterface = () => {
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto">
             {messages.length === 0 ? (
-              <WelcomeScreen onExampleClick={handleExampleClick} />
+              <WelcomeScreen onExampleClick={testWithExample} />
             ) : (
               <div>
                 {messages.map((message) => (
@@ -111,9 +116,7 @@ const ChatInterface = () => {
               </div>
             )}
           </div>
-          
-          {/* Input area */}
-          <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          {user &&  <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />}
         </div>
       </div>
     </div>
