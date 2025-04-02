@@ -5,13 +5,13 @@ import { Zap, Lightbulb, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GoogleIcon } from './ui/Icons';
 import { GoogleAuth } from '@/lib/utils';
-import { User } from '@/context/Usercontext';
+import { useUser } from '@/context/Usercontext';
 interface WelcomeScreenProps {
   onExampleClick: (example: string) => void;
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onExampleClick }) => {
-  const user = useContext(User)
+  const { appUser } = useUser()
   const handleSignin = () => {
     GoogleAuth()
   }
@@ -64,7 +64,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onExampleClick }) => {
           Powered by advanced AI technology to create intuitive and relatable analogies that simplify complex topics.
         </p>
       </div>
-      {!user && 
+      {!appUser && 
             <Button 
             className="sticky bottom-4 flex lg:hidden w-full items-center gap-2 bg-analogyai-primary hover:bg-analogyai-secondary" 
             onClick={() => handleSignin()}

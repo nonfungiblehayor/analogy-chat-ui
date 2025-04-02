@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import UserContextProvider from "./context/Usercontext";
 import ToastProvider from "./context/Toastcontext";
+import Layout from "./components/Layout";
+import ConversationChat from "./pages/conversation/[id]";
 
 const queryClient = new QueryClient();
 
@@ -19,8 +21,8 @@ const App = () => (
       <BrowserRouter>
       <UserContextProvider>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<Layout> <Index /> </Layout>} />
+          <Route path="/conversation/:id" element={<Layout> <ConversationChat /> </Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserContextProvider>
