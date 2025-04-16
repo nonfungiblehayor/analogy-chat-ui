@@ -15,7 +15,7 @@ export const GoogleAuth = () => {
 }
 export const generateAnalogy = async(question: string) => {
   try {
-    const response = await fetch("http://localhost:3000/ask", {
+    const response = await fetch("https://analogy-ai.onrender.com/ask", {
       method: "POST",      
       headers: {
         "Content-Type": "application/json",
