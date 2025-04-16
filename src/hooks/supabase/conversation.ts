@@ -13,7 +13,7 @@ export const useGetHistory = (user_id: string) =>
         queryKey: ["conversations", user_id],
         queryFn: async() => {
             if(!user_id) return null
-            const { data, error } = await supabase.from("conversations").select("*").eq("user_id", user_id)
+            const { data, error } = await supabase.from("conversations").select("*").eq("user_id", user_id).order('created_at', { ascending: false })
             if (error) throw new Error(error.message);
             return data;
         } 

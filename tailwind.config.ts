@@ -89,6 +89,11 @@ export default {
 					from: { height: "var(--radix-accordion-content-height)" },
 					to: { height: "0" },
 				},
+				'gradient-run': {
+					'0%': { 'background-position': '0% 50%' },
+					'50%': { 'background-position': '100% 50%' },
+					'100%': { 'background-position': '0% 50%' },
+				},
 				typing: {
 					"0%": {
 						width: "0%",
@@ -110,6 +115,7 @@ export default {
 			animation: {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
+				'gradient-run': 'gradient-run 3s linear infinite',
 				typing: "typing 2s steps(20) infinite alternate, blink .7s infinite"
 			}
 		}

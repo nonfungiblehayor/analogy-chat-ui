@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { SendIcon } from 'lucide-react';
+import { Loader2, SendIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -45,7 +45,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             className="absolute right-2 bg-analogyai-primary hover:bg-analogyai-secondary"
             disabled={!message.trim() || isLoading}
           >
-            <SendIcon className="h-4 w-4" />
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-white" /> : <SendIcon className="h-4 w-4" />} 
           </Button>
         </div>
         <p className="mt-2 text-center text-xs text-muted-foreground">
