@@ -1,5 +1,4 @@
-import React, { useContext } from "react";
-import { Plus, MessageCircle, Trash, Loader2, Loader } from "lucide-react";
+import { Plus, MessageCircle, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUser } from "@/context/Usercontext";
@@ -17,11 +16,10 @@ type requiredProps = {
   newChat: () => void
 }
 const ChatSidebar = ({ newChat }: requiredProps) => {
-  // Example conversations
   const { appUser } = useUser()
   const param = useParams()
   const handleSignin = () => {
-    GoogleAuth();
+    GoogleAuth()
   };
   
   const navigate = useNavigate()
