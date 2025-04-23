@@ -40,4 +40,17 @@ export const useGetConversation = (id: string) =>
             if (error) throw new Error (error.message)
             return data
         }
+})
+export const useDeleteConversation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async(id: string) => {
+            const { data, error } = await supabase.from("conversations").delete().eq("id", id)
+            if(error) throw error.message
+            if(data) return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        },
     })
+}

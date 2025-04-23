@@ -35,24 +35,9 @@ const ChatInterface = () => {
         navigate(`/conversation/${response.conversation_id}`)
       })
     }
-    // setMessages((prev) => [
-    //   ...prev,
-    //   {
-    //     id: Date.now().toString(),
-    //     content: response?.answer,
-    //     role: "assistant",
-    //     timestamp: new Date(),
-    //   },
-    // ]);
   };
   const handleSendMessage = async(content: string) => {
     setIsLoading(true)
-    // const newMessage: MessageType = {
-    //   id: Date.now().toString(),
-    //   content,
-    //   role: "user",
-    //   timestamp: new Date(),
-    // };
     const question = await generateAnalogy(content)
     if(question) {
       addConversation.mutateAsync({user_id: appUser.id, title: question?.title.split(':')[0].trim(), initial_message: content}).then((response) => {
@@ -60,7 +45,6 @@ const ChatInterface = () => {
           setIsLoading(false)
         })
       })
-      // setMessages((prev) => [...prev, newMessage]);
     }
   };
   return (

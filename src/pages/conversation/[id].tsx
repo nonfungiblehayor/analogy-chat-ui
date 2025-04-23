@@ -1,8 +1,7 @@
 import ChatInput from "@/components/ChatInput"
 import ChatMessage, { MessageType } from "@/components/ChatMessage"
 import { useUser } from "@/context/Usercontext"
-import { useGetConversation } from "@/hooks/supabase/conversation"
-import { addQuestion, getQuestions } from "@/hooks/supabase/question"
+import { addQuestion, getQuestions,} from "@/hooks/supabase/question"
 import { generateAnalogy } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
@@ -27,15 +26,6 @@ const ConversationChat = () => {
       if(response) {
         askQuestion.mutateAsync({conversation_id: param?.id, response: response?.answer, question: message})
       }
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     id: Date.now().toString(),
-      //     content: response?.answer,
-      //     role: "assistant",
-      //     timestamp: new Date(),
-      //   },
-      // ]);
     };
     const handleSendMessage = (content: string) => {
       setIsLoading(true);
@@ -76,7 +66,7 @@ const ConversationChat = () => {
               </div>
         )}
         {questions?.length > 0 && messages?.length > 0 && messages?.map((message) => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessage id={param.id} questionsLength={questions?.length} key={message.id} message={message} />
         ))}
         {/* {isLoading && (
           <div className="py-8 px-4">

@@ -26,4 +26,30 @@ export const getQuestions = (conversation_id: string) =>
             if(error) throw  error.message
             return data
         }
+})
+export const useUpdateResponse = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async(payload: {question_id: string, newResponse: string}) => {
+            const { data, error } = await supabase.from("questions").update({"response": payload.newResponse}).eq("id", payload.question_id).select("*")
+            if(error) throw error.message
+            if(data) return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+        },
     })
+}
+export const deleteQuestion = () =>  {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async(question_id: string) => {
+            const { data, error} = await supabase.from("questions").delete().eq("id", question_id)
+            if(error) throw error.message
+            if(data) return data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["questions"] });
+        },
+    })
+}
