@@ -17,7 +17,6 @@ type requiredProps = {
 const ChatSidebar = ({ newChat }: requiredProps) => {
   const { appUser } = useUser()
   const param = useParams()
-  console.log(param)
   const handleSignin = () => {
     GoogleAuth()
   };
