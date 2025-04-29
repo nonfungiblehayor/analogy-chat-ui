@@ -99,19 +99,19 @@ const ChatSidebar = ({ newChat }: requiredProps) => {
           <div className="space-y-1">
             {history.map((conversation) => (
             <div className="flex flex-col">
-              <div className="flex items-center">
+              <div className="flex justify-between w-full  items-center">
               <Button
                 key={conversation.id}
                 onClick={() => openConversation(conversation.id)}
                 variant="ghost"
-                className={`flex w-6/12 justify-start gap-2 text-left hover:bg-chat-hover ${param.id === conversation.id && "bg-chat-hover"}`}
+                className={`flex w-5/12 md:w-6/12 justify-start gap-2 text-left hover:bg-chat-hover ${param.id === conversation.id && "bg-chat-hover"}`}
               >
                 <MessageCircle className="h-4 w-4" />
                 <div className="flex-1 truncate">{conversation.title}</div>
               </Button>
               <Dialog>
                 <DialogTrigger>
-                  <div className="flex px-[4px] items-center cursor-pointer">
+                  <div className="flex absolute right-2 items-center cursor-pointer">
                     <Share2 className="w-3 h-3"/>
                   </div>
                 </DialogTrigger>

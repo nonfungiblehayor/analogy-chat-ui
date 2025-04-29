@@ -69,8 +69,8 @@ const ConversationChat = () => {
         {appUser && appUser?.id === conversation?.user_id && (
         <Dialog>
         <DialogTrigger>
-          <div className="flex items-center justify-end sticky top-0 p-4">
-          <Button className="bg-transparent hover:bg-transparent focus:bg-transparent w-[180px] border border-dotted border-red-500 text-red-500">
+          <div className="md:flex hidden items-center justify-end sticky top-0 p-4">
+          <Button className="bg-transparent hover:bg-transparent focus:bg-transparent md:w-[180px] border border-dotted border-red-500 text-red-500">
             Delete Conversation <Trash2 />
           </Button>
           </div>
@@ -105,19 +105,26 @@ const ConversationChat = () => {
         {questions?.length > 0 && messages?.length > 0 && messages?.map((message) => (
           <ChatMessage id={param.id} questionsLength={questions?.length} key={message.id} message={message} />
         ))}
-        {/* {isLoading && (
-          <div className="py-8 px-4">
-            <div className="mx-auto flex max-w-3xl items-start gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-analogyai-primary">
-                <Loader2 className="h-5 w-5 animate-spin text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="h-6 w-1/3 animate-pulse rounded bg-muted"></div>
-              </div>
-            </div>
-            <div ref={messagesEndRef} />
+        {appUser && appUser?.id === conversation?.user_id && (
+        <Dialog>
+        <DialogTrigger className="fixed bottom-28 z-10 right-2 md:hidden">
+          <div className="flex items-center justify-end sticky top-0 p-4">
+          <Button className="bg-red-500 hover:bg-red-500 focus:bg-red-500 md:w-[180px]">
+             <Trash2 />
+          </Button>
           </div>
-        )} */}
+        </DialogTrigger>
+        <DialogContent>
+            Are you sure you want to delete this conversation ?
+            <div className="flex items-center w-full justify-end gap-x-4">
+              <DialogClose>
+                <Button className="bg-tranparent text-black border hover:bg-transparent focus:bg-transparent">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleDeleteConversation} className="bg-red-500 hover:bg-red-500 focus:bg-red-500">Delete</Button>
+            </div>
+        </DialogContent>
+      </Dialog>
+        )}
         </div>
         {appUser && (
             <ChatInput
