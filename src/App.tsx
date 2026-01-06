@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import UserContextProvider from "./context/Usercontext";
 import ToastProvider from "./context/Toastcontext";
 import Layout from "./components/Layout";
+import { GameProvider } from "./context/GameContext";
 import ConversationChat from "./pages/conversation/[id]";
 
 const queryClient = new QueryClient();
@@ -19,13 +20,15 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-      <UserContextProvider>
-        <Routes>
-          <Route path="/" element={<Layout> <Index /> </Layout>} />
-          <Route path="/conversation/:id" element={<Layout> <ConversationChat /> </Layout>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </UserContextProvider>
+        <GameProvider>
+          <UserContextProvider>
+            <Routes>
+              <Route path="/" element={<Layout> <Index /> </Layout>} />
+              <Route path="/conversation/:id" element={<Layout> <ConversationChat /> </Layout>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserContextProvider>
+        </GameProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
