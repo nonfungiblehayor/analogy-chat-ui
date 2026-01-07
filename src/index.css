@@ -149,3 +149,78 @@
   background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1px);
   background-size: 40px 40px;
 }
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  50% {
+    transform: translateX(5px);
+  }
+
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@layer utilities {
+  .bg-obsidian {
+    background-color: #121212;
+  }
+
+  .text-klein-blue {
+    color: #002FA7;
+  }
+
+  .bg-klein-blue {
+    background-color: #002FA7;
+  }
+
+  .text-slate-grey {
+    color: #4A5568;
+  }
+}
+
+@keyframes unfold {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.animate-unfold {
+  transform-origin: top;
+  animation: unfold 0.4s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
