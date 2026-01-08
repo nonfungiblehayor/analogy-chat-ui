@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameState, PlayerStats, RiddleQuestion } from '@/types/gameTypes';
 import { MOCK_RIDDLES } from '@/lib/mockData';
 import IntroModal from './IntroModal';
@@ -7,12 +7,23 @@ import GameArena from './GameArena';
 import ResultsDashboard from './ResultsDashboard';
 import { useGame } from '@/context/GameContext';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/hooks/supabase';
 
 const ReverseRiddleGame = () => {
     const { setActiveGame } = useGame();
     const [gameState, setGameState] = useState<GameState>('INTRO');
-    const [gameTopic, setGameTopic] = useState<string>('General');
-    const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
+
+    // Consolidated Game Configuration State
+    const [gameConfig, setGameConfig] = useState<{
+        topic: string;
+        subTopics: string[];
+        difficulty: 'Easy' | 'Medium' | 'Hard';
+    }>({
+        topic: 'General',
+        subTopics: [],
+        difficulty: 'Medium'
+    });
+
     const [questions, setQuestions] = useState<RiddleQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [stats, setStats] = useState<PlayerStats>({
@@ -40,18 +51,58 @@ const ReverseRiddleGame = () => {
         setGameState('SETUP');
     };
 
-    const handleSetupComplete = (selectedTopic: string, selectedDiff: 'Easy' | 'Medium' | 'Hard') => {
-        setGameTopic(selectedTopic);
-        setDifficulty(selectedDiff);
+    const handleSetupComplete = (selectedTopic: string, subTopics: string[], selectedDiff: 'Easy' | 'Medium' | 'Hard') => {
+        setGameConfig({
+            topic: selectedTopic,
+            subTopics: subTopics,
+            difficulty: selectedDiff
+        });
         setGameState('PLAYING');
     };
+
+    useEffect(() => {
+        const saveGameSession = async () => {
+            if (gameState === 'FINISHED') {
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (!user) {
+                        console.error('No authenticated user found');
+                        return;
+                    }
+
+                    const { error } = await supabase
+                        .from('normal_games')
+                        .insert({
+                            user_id: user.id,
+                            game_type: 'riddle_game',
+                            topic: gameConfig.topic,
+                            sub_topic: gameConfig.subTopics.length > 0 ? gameConfig.subTopics.join(', ') : 'General',
+                            difficulty_level: gameConfig.difficulty.toLowerCase(),
+                            user_score: stats.score, // Use the current final score
+                            created_at: new Date().toISOString()
+                        });
+
+                    if (error) {
+                        console.error('Error saving game session:', error);
+                    } else {
+                        console.log('Game session saved successfully');
+                    }
+                } catch (err) {
+                    console.error('Unexpected error saving game:', err);
+                }
+            }
+        };
+
+        saveGameSession();
+    }, [gameState]); // Run only when gameState changes
 
     const handleAnswer = (isCorrect: boolean, timeTaken: number) => {
         if (!questions[currentQuestionIndex]) return;
 
-        const baseScore = 100;
-        const streakBonus = isCorrect ? stats.streak * 10 : 0;
-        const scoreToAdd = isCorrect ? baseScore + streakBonus : 0;
+        // New Scoring Logic: 10 points for correct, 0 for incorrect. 
+        // Ignoring previous complexity of streaks/time for now based on user request "10 points for correct answer"
+        const scoreToAdd = isCorrect ? 10 : 0;
 
         setStats(prev => ({
             ...prev,

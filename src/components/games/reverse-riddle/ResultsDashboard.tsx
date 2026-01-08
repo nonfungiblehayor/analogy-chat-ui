@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PlayerStats } from '@/types/gameTypes';
 import { Button } from '@/components/ui/button';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Trophy, RefreshCcw, Home, Share2, Sparkles, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/hooks/supabase';
 
 interface ResultsDashboardProps {
     stats: PlayerStats;
@@ -11,25 +12,97 @@ interface ResultsDashboardProps {
     onExit: () => void;
 }
 
-// Mock Leaderboard Data
-const LEADERBOARD_DATA = [
-    { rank: 1, name: "NeuralKnight", score: 2500, avatar: "bg-purple-500" },
-    { rank: 2, name: "LogicMaster", score: 2350, avatar: "bg-cyan-500" },
-    { rank: 3, name: "RiddleSolver", score: 2100, avatar: "bg-rose-500" },
-    { rank: 4, name: "CognitiveFlow", score: 1980, avatar: "bg-amber-500" },
-];
-
 const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ stats, onPlayAgain, onExit }) => {
+    const [graphData, setGraphData] = useState<{ index: number; score: number; }[]>([]);
+    const [leaderboard, setLeaderboard] = useState<{ rank: number; name: string; score: number; avatar: string; initials: string; }[]>([]);
 
-    // Transform history for the graph
-    let runningScore = 0;
-    const graphData = stats.history.map((h, i) => {
-        if (h.isCorrect) runningScore += 100;
-        return { index: i + 1, score: runningScore, correct: h.isCorrect ? 1 : 0 };
-    });
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
 
-    // Ensure at least some points for the graph if empty
-    if (graphData.length === 0) graphData.push({ index: 0, score: 0, correct: 0 });
+                // 1. Fetch Flow State Data (Last 10 Riddle Games for Current User)
+                const { data: historyData } = await supabase
+                    .from('normal_games')
+                    .select('user_score, created_at')
+                    .eq('user_id', user.id)
+                    .eq('game_type', 'riddle_game')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (historyData) {
+                    // Reverse to show chronological order (Oldest -> Newest)
+                    const chronHistory = [...historyData].reverse();
+                    const formattedGraph = chronHistory.map((game, i) => ({
+                        index: i + 1,
+                        score: game.user_score || 0
+                    }));
+                    setGraphData(formattedGraph);
+                }
+
+                // 2. Fetch Leaderboard Data with Profiles
+                // Step A: Fetch all recent riddle games to aggregate
+                const { data: lbGames } = await supabase
+                    .from('normal_games')
+                    .select('user_score, user_id')
+                    .eq('game_type', 'riddle_game')
+                    .order('created_at', { ascending: false })
+                    .limit(1000);
+
+                if (lbGames && lbGames.length > 0) {
+                    // Aggregate: Sum scores per user
+                    const userMap = new Map<string, number>();
+
+                    lbGames.forEach(game => {
+                        const currentScore = userMap.get(game.user_id) || 0;
+                        userMap.set(game.user_id, currentScore + (game.user_score || 0));
+                    });
+
+                    // Sort by Total Score
+                    const sortedUsers = Array.from(userMap.entries())
+                        .map(([userId, totalScore]) => ({ userId, totalScore }))
+                        .sort((a, b) => b.totalScore - a.totalScore)
+                        .slice(0, 5);
+
+                    // Step B: Fetch profiles for these users
+                    const userIds = sortedUsers.map(u => u.userId);
+                    const { data: profiles } = await supabase
+                        .from('profiles')
+                        .select('id, username, avatar_url')
+                        .in('id', userIds);
+
+                    // Step C: Merge data
+                    const formattedLb = sortedUsers.map((entry, i) => {
+                        const { userId, totalScore } = entry;
+                        const profile = profiles?.find(p => p.id === userId);
+                        const isCurrentUser = userId === user.id;
+
+                        // Name logic: Profile username -> "You" (if current) -> "Player X"
+                        let displayName = "Unknown Player";
+                        if (isCurrentUser) displayName = "You";
+                        else if (profile?.username) displayName = profile.username;
+                        else displayName = `Player ${userId.slice(0, 4)}`;
+
+                        return {
+                            rank: i + 1,
+                            name: displayName,
+                            score: totalScore,
+                            avatar: ["bg-purple-500", "bg-cyan-500", "bg-rose-500", "bg-amber-500", "bg-emerald-500"][i % 5],
+                            initials: (profile?.username || displayName).substring(0, 2).toUpperCase()
+                        };
+                    });
+                    setLeaderboard(formattedLb);
+                }
+
+
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const percentage = stats.totalQuestions > 0 ? (stats.correctAnswers / stats.totalQuestions) * 100 : 0;
 
@@ -80,7 +153,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ stats, onPlayAgain,
                         </div>
                         <div className="bg-white/5 rounded-2xl p-4 border border-white/5 text-center">
                             <div className="text-2xl font-bold text-white">{stats.hintsUsed}</div>
-                            <div className="text-[10px] text-zinc-500 uppercase font-bold">Hints</div>
+                            <div className="text-[10px] text-zinc-500 uppercase font-bold">Hints Used</div>
                         </div>
                     </div>
                 </div>
@@ -91,11 +164,11 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ stats, onPlayAgain,
                     <div className="bg-[#18181b] rounded-[2rem] p-6 border border-white/5 shadow-xl flex-1 flex flex-col">
                         <div className="flex items-center gap-2 mb-4">
                             <TrendingUp className="h-4 w-4 text-emerald-500" />
-                            <span className="text-xs font-bold text-zinc-400 uppercase">Flow State</span>
+                            <span className="text-xs font-bold text-zinc-400 uppercase">Flow State (Last 10)</span>
                         </div>
                         <div className="flex-1 w-full min-h-[120px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={graphData}>
+                                <AreaChart data={graphData.length > 0 ? graphData : [{ index: 0, score: 0 }]}>
                                     <defs>
                                         <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#002FA7" stopOpacity={0.8} />
@@ -116,27 +189,30 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ stats, onPlayAgain,
                     </div>
 
                     {/* Ticket Style Leaderboard */}
-                    <div className="bg-[#EFEFEF] dark:bg-[#000] rounded-[2rem] p-6 border border-zinc-200 dark:border-zinc-800 relative">
+                    <div className="bg-[#EFEFEF] dark:bg-[#000] rounded-[2rem] p-6 border border-zinc-200 dark:border-zinc-800 relative min-h-[200px]">
                         {/* Perforation Effect */}
                         <div className="absolute -top-[1px] left-8 right-8 border-t-2 border-dashed border-zinc-400/30" />
 
                         <div className="flex justify-between items-center mb-4">
-                            <span className="text-xs font-black uppercase text-zinc-500 tracking-widest">+50 PTS ADDED</span>
-                            <span className="text-xs font-mono font-bold text-klein-blue">RANK #124</span>
+                            <span className="text-xs font-black uppercase text-zinc-500 tracking-widest">TOP RIDDLERS</span>
                         </div>
 
                         <div className="space-y-3">
-                            {LEADERBOARD_DATA.slice(0, 3).map((user) => (
+                            {leaderboard.length > 0 ? leaderboard.map((user) => (
                                 <div key={user.rank} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className={cn("h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white", user.avatar)}>
-                                            {user.rank}
+                                        <div className={cn("h-6 w-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white", user.avatar)}>
+                                            {user.initials}
                                         </div>
-                                        <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{user.name}</span>
+                                        <span className={cn("text-sm font-bold", user.name === "You" ? "text-klein-blue" : "text-zinc-700 dark:text-zinc-300")}>
+                                            {user.name}
+                                        </span>
                                     </div>
                                     <span className="font-mono text-xs text-zinc-400">{user.score}</span>
                                 </div>
-                            ))}
+                            )) : (
+                                <p className="text-xs text-zinc-500 text-center py-4">No top scores yet.</p>
+                            )}
                         </div>
                     </div>
                 </div>

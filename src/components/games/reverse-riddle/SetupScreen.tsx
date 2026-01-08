@@ -4,7 +4,7 @@ import { Sparkles, ArrowLeft, Check, Aperture } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SetupScreenProps {
-    onComplete: (topic: string, difficulty: 'Easy' | 'Medium' | 'Hard') => void;
+    onComplete: (topic: string, subTopics: string[], difficulty: 'Easy' | 'Medium' | 'Hard') => void;
     onBack: () => void;
 }
 
@@ -243,7 +243,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onComplete, onBack }) => {
             {/* Action Button - Dynamic & Minimal */}
             <div className={`mt-4 transition-all duration-500 transform ${viewMode === 'MACRO' ? 'opacity-0 translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
                 <Button
-                    onClick={() => onComplete(selectedTopic, difficulty)}
+                    onClick={() => onComplete(selectedTopic, subTopicSelection, difficulty)}
                     className="w-full h-14 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold text-lg shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                 >
                     <span>{getButtonText()}</span>

@@ -4,43 +4,117 @@ import { useGame } from "@/context/GameContext";
 import { ArrowLeft, Sparkles, Trophy, Gamepad2, Brain, Puzzle, Target, Medal, Star, Flame, RefreshCcw, CheckCircle2, AlertCircle } from "lucide-react";
 import { generateGameContent, evaluateAnalogy } from "@/lib/utils";
 
+import LeaderboardOverlay from "@/components/LeaderboardOverlay";
+
+import { supabase } from '@/hooks/supabase';
+import { cn } from '@/lib/utils';
+
 // Game Skeletons (to be implemented fully later)
-const SelectionView = () => {
+const SelectionView = ({ onOpenLeaderboard }: { onOpenLeaderboard: () => void }) => {
     const { setActiveGame, userStats, gameTopic, setGameTopic } = useGame();
+    const [previewLeaderboard, setPreviewLeaderboard] = useState<{ rank: number; name: string; score: number; avatar: string; initials: string; }[]>([]);
+
+    useEffect(() => {
+        const fetchPreview = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+
+                // Fetch all recent scores to aggregate
+                const { data: lbGames } = await supabase
+                    .from('normal_games')
+                    .select('user_score, user_id')
+                    .order('created_at', { ascending: false })
+                    .limit(1000);
+
+                if (lbGames && lbGames.length > 0) {
+                    // Aggregate Scores
+                    const userMap = new Map<string, number>();
+
+                    lbGames.forEach(game => {
+                        const currentScore = userMap.get(game.user_id) || 0;
+                        userMap.set(game.user_id, currentScore + (game.user_score || 0));
+                    });
+
+                    // Sort by Total Score
+                    const sortedUsers = Array.from(userMap.entries())
+                        .map(([userId, totalScore]) => ({ userId, totalScore }))
+                        .sort((a, b) => b.totalScore - a.totalScore)
+                        .slice(0, 3);
+
+                    const userIds = sortedUsers.map(u => u.userId);
+                    const { data: profiles } = await supabase
+                        .from('profiles')
+                        .select('id, username, avatar_url')
+                        .in('id', userIds);
+
+                    const formattedLb = sortedUsers.map((entry, i) => {
+                        const { userId, totalScore } = entry;
+                        const profile = profiles?.find(p => p.id === userId);
+                        const isCurrentUser = user ? userId === user.id : false;
+
+                        let displayName = "Unknown Player";
+                        if (isCurrentUser) displayName = "You";
+                        else if (profile?.username) displayName = profile.username;
+                        else displayName = `Player ${userId.slice(0, 4)}`;
+
+                        return {
+                            rank: i + 1,
+                            name: displayName,
+                            score: totalScore,
+                            avatar: ["bg-purple-500", "bg-cyan-500", "bg-rose-500", "bg-amber-500", "bg-emerald-500"][i % 5],
+                            initials: (profile?.username || displayName).substring(0, 2).toUpperCase()
+                        };
+                    });
+                    setPreviewLeaderboard(formattedLb);
+                }
+            } catch (error) {
+                console.error("Error fetching preview leaderboard:", error);
+            }
+        };
+        fetchPreview();
+    }, []);
 
     return (
         <div className="relative z-10 flex flex-col items-center max-w-5xl w-full px-6 text-center space-y-8 animate-in zoom-in-95 fade-in duration-700 pb-10 pt-8">
             {/* User Stats - Compacted */}
             <div className="w-full max-w-4xl bg-white/5 border border-white/10 rounded-[2rem] p-4 backdrop-blur-md shadow-2xl">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-analogyai-primary to-analogyai-secondary p-0.5">
+                    <div className="flex items-center gap-4 min-w-max">
+                        <div className="h-14 w-14 flex-shrink-0 rounded-full bg-gradient-to-br from-analogyai-primary to-analogyai-secondary p-0.5">
                             <div className="w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center">
                                 <Trophy className="h-6 w-6 text-white" />
                             </div>
                         </div>
-                        <div className="text-left">
+                        <div className="text-left whitespace-nowrap">
                             <h2 className="text-xl font-black text-white leading-none">Arena Profile</h2>
                             <p className="text-zinc-500 text-xs font-medium">Rank #{userStats.rank} Overall</p>
                         </div>
                     </div>
 
-                    <div className="flex gap-8 items-center bg-white/5 rounded-2xl px-8 py-3 border border-white/5">
-                        <div className="text-center">
+                    <div className="flex flex-wrap md:flex-nowrap gap-2 md:gap-8 items-center justify-between md:justify-center bg-white/5 rounded-2xl px-3 md:px-8 py-3 border border-white/5 w-full md:w-auto">
+                        <div className="text-center min-w-[60px]">
                             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Points</p>
                             <p className="text-xl font-black text-analogyai-primary">{userStats.points}</p>
                         </div>
-                        <div className="h-8 w-px bg-white/10" />
-                        <div className="text-center">
+                        <div className="h-8 w-px bg-white/10 hidden md:block" />
+                        <div className="text-center min-w-[60px]">
                             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Solved</p>
                             <p className="text-xl font-black text-analogyai-secondary">{userStats.gamesPlayed}</p>
                         </div>
-                        <div className="h-8 w-px bg-white/10" />
-                        <div className="text-center">
+                        <div className="h-8 w-px bg-white/10 hidden md:block" />
+                        <div className="text-center min-w-[60px]">
                             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Streak</p>
                             <div className="flex items-center gap-1 justify-center">
                                 <Flame className="h-4 w-4 text-orange-500" />
-                                <p className="text-xl font-black text-white">5</p>
+                                <p className="text-xl font-black text-white">{userStats.streak}</p>
+                            </div>
+                        </div>
+                        <div className="h-8 w-px bg-white/10 hidden md:block" />
+                        <div className="text-center min-w-[60px]">
+                            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 whitespace-nowrap">Win Streak</p>
+                            <div className="flex items-center gap-1 justify-center">
+                                <Target className="h-4 w-4 text-green-500" />
+                                <p className="text-xl font-black text-white">{userStats.winningStreak}</p>
                             </div>
                         </div>
                     </div>
@@ -154,6 +228,49 @@ const SelectionView = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Global Leaderboard Card (Ticket Style) */}
+            <div className="w-full mt-6 grid grid-cols-1">
+                <div
+                    onClick={onOpenLeaderboard}
+                    className="group relative p-6 rounded-3xl bg-[#121212] border border-white/10 backdrop-blur-xl hover:bg-white/5 transition-all cursor-pointer hover:border-yellow-500/50 hover:-translate-y-2 shadow-xl overflow-hidden"
+                >
+                    <div className="absolute -top-[1px] left-8 right-8 border-t-2 border-dashed border-zinc-400/30" />
+
+                    <div className="relative z-10 w-full flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="w-full md:w-1/3 flex items-center gap-4">
+                            <div className="h-14 w-14 rounded-full bg-gradient-to-br from-yellow-500 to-amber-700 p-0.5 flex-shrink-0">
+                                <div className="w-full h-full rounded-full bg-[#121212] flex items-center justify-center">
+                                    <Trophy className="h-6 w-6 text-yellow-500" />
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-left text-white group-hover:text-yellow-500 transition-colors">Hall of Fame</h3>
+                                <p className="text-xs text-zinc-400 text-left">Top Global Rankings</p>
+                            </div>
+                        </div>
+
+                        {/* Preview List */}
+                        <div className="w-full md:w-2/3 space-y-2">
+                            {previewLeaderboard.length > 0 ? previewLeaderboard.map((user) => (
+                                <div key={user.rank} className="flex items-center justify-between bg-white/5 rounded-full px-4 py-2 hover:bg-white/10 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className={cn("h-6 w-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white", user.avatar)}>
+                                            {user.initials}
+                                        </div>
+                                        <span className={cn("text-sm font-bold", user.name === "You" ? "text-analogyai-primary" : "text-zinc-300")}>
+                                            {user.name}
+                                        </span>
+                                    </div>
+                                    <span className="font-mono text-xs text-zinc-500">{user.score} pts</span>
+                                </div>
+                            )) : (
+                                <div className="text-center text-xs text-zinc-500 py-2">Loading top scores...</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
@@ -171,13 +288,14 @@ import WordleGame from "@/components/games/wordle/WordleGame";
 
 const GameView = () => {
     const { setGameMode, activeGame } = useGame();
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     const renderActiveGame = () => {
         switch (activeGame) {
             case 'reverse-riddle': return <ReverseRiddleGame />;
             case 'context-challenge': return <ContextChallengeGame />;
             case 'wordle': return <WordleGame />;
-            default: return <SelectionView />;
+            default: return <SelectionView onOpenLeaderboard={() => setShowLeaderboard(true)} />;
         }
     };
 
@@ -201,6 +319,8 @@ const GameView = () => {
             </div>
 
             {renderActiveGame()}
+
+            <LeaderboardOverlay isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
 
         </div>
     );
